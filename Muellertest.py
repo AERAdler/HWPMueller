@@ -19,7 +19,7 @@ def phi(nu, n_s, n_f, d):
 
 def mueller_single_plate(nu, n_s, n_f, d):#DONT USE as model for eps!=0
 
-    mueller_mat = np.zeros(4,nu.size)
+    mueller_mat = np.zeros((4,nu.size))
     a, b = transmission(nu)
     phase = phi(nu, n_s,n_f,d)
     mueller_mat[0,:] = (a**2+b**2)/2.0 #00 and 11 elements
@@ -37,13 +37,23 @@ n_s = 3.36 #From 1006.3874
 n_f =3.04 #From 1006.3874
 d = 3.05e-3
 
-nu = np.arange(1e11, 2e11, 1e9)
+nu = np.arange(0, 3e11, 1e9)
 
 mueller_response = mueller_single_plate(nu, n_s, n_f, d)
 
-fig, ax = plt.subplots(2, 2)
-ax[0,0].plot(nu, mueller_response[0,:], 'r--')
-ax[0,1].plot(nu, mueller_response[1,:], 'r--')
-ax[1,0].plot(nu, mueller_response[2,:], 'r--')
-ax[1,1].plot(nu, mueller_response[3,:], 'r--')
+fig, ax = plt.subplots(2, 2, sharey='col', sharex='row')
+ax[0,0].plot(nu/1e9, mueller_response[0,:], 'r--')
+ax[0,0].set(xlabel="Frequency [GHz]", title='T')
+
+ax[0,1].plot(nu/1e9, mueller_response[1,:], 'r--')
+ax[0,1].set(xlabel="Frequency [GHz]", title=r'$\rho$')
+
+ax[1,0].plot(nu/1e9, mueller_response[2,:], 'r--')
+ax[1,0].set(xlabel="Frequency [GHz]", title='c')
+
+ax[1,1].plot(nu/1e9, mueller_response[3,:], 'r--')
+ax[1,1].set(xlabel="Frequency [GHz]", title='s')
+
+
+plt.subplots_adjust(left=0.1, bottom=0.08, right=0.9, top=0.92, wspace=0.2, hspace=0.35)
 plt.show()
