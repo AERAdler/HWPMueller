@@ -17,5 +17,16 @@ def transmission(nu):
 
 def phi(nu, n_s, n_f, d):
 
-    return 2.0*np.pi*d*(n_s-n_f)*nu
+    return 2.0*np.pi*d*(n_s-n_f)/Celerity *nu
 
+def mueller_single_plate(nu, n_s, n_f, d):#DONT USE as model for eps!=0
+
+    mueller_mat = np.zeros(4,nu.size)
+    a, b = transmission(nu)
+    phase = phi(nu, n_s,n_f,d)
+    mueller_mat[0,:] = (a**2+b**2)/2.0 #00 and 11 elements
+    mueller_mat[1,:] = (a**2-b**2)/2.0 #01 and 10 elements
+    mueller_mat[2,:] = a*b*np.cos(phase) #22 and 33 elements
+    mueller_mat[3,:] = a*b*np.sin(phase) #23 and minus 32 elements
+
+    return mueller_mat
