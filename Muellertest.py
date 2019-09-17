@@ -3,10 +3,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-eps_1 = 0+0j
-eps_2 = 0+0j
-
 Celerity = 3e8 #Speed of light in medium
+
 
 sapphire_transmission = np.loadtxt('dummy_sapphire.txt')
 
@@ -30,3 +28,15 @@ def mueller_single_plate(nu, n_s, n_f, d):#DONT USE as model for eps!=0
     mueller_mat[3,:] = a*b*np.sin(phase) #23 and minus 32 elements
 
     return mueller_mat
+
+#Input parameters
+eps_1 = 0+0j
+eps_2 = 0+0j
+
+n_s = 3.36 #From 1006.3874
+n_f =3.04 #From 1006.3874
+d = 3.05e-3
+
+nu = np.arange(1e11, 2e11, 1e9)
+
+mueller_response = mueller_single_plate(nu, n_s, n_f, d)
