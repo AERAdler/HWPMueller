@@ -40,3 +40,10 @@ d = 3.05e-3
 nu = np.arange(1e11, 2e11, 1e9)
 
 mueller_response = mueller_single_plate(nu, n_s, n_f, d)
+
+fig, ax = plt.subplots(2, 2)
+ax[0,0].plot(nu, mueller_response[0,:], 'r--')
+ax[0,1].plot(nu, mueller_response[1,:], 'r--')
+ax[1,0].plot(nu, mueller_response[2,:], 'r--')
+ax[1,1].plot(nu, mueller_response[3,:], 'r--')
+plt.show()
