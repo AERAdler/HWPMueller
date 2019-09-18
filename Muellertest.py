@@ -65,7 +65,7 @@ def mueller_multiple_layer(nu, n_s, n_f, d):# Equation 9
                     -np.real(eps_1)*np.real(eps_2) - np.imag(eps_1)*np.imag(eps_2) + a*b*np.cos(phase)
                     ]
                 ])
-
+    mueller_mat = np.moveaxis(mueller_mat, (0,1), (-2,-1))#To make compliant with matmul later
     return mueller_mat
 
 def jones_to_mueller(J):# Equation 3
@@ -81,19 +81,23 @@ def inst_rot_matrix(psi):#Tinbergen, Astronoimical Polarimetry
     b = np.zeros(psi.shape)
     c = np.cos(2*psi)
     d = np.sin(2*psi)
-    return np.array([[a,b,b,b],[b,c,d,b],[b,-d,c,b],[b,b,b,a]])
+    return np.moveaxis(np.array([[a,b,b,b],[b,c,d,b],[b,-d,c,b],[b,b,b,a]]), (0,1), (-2,-1))
 
-def instrument_total_matrix(nu, n_s, n_f, d, eps_1, eps_2, eta, delta, chi, theta, psi):
+def instrument_total_matrix(nu, n_s, n_f, d, eta, delta, chi, theta, psi):
     #nu is the frequency of the light
-    #n_s, n_f, d, eps_1 and eps_2 are the properties of the hwp
+    #n_s, n_f, and d are the properties of the hwp
     #eta and delta are the two Jones parameters for the detector
     #chi, theta, and psi are rotation of detector, hwp and boresight
-
+    a, b, eps_1, eps_2 = properties(nu)
     mesh_chi, mesh_theta, mesh_psi, mesh_nu = np.meshgrid(chi, theta, psi, nu)#4D arrays of all possible positions and frequencies
     #This might cause memory size issues ? 
-    return (inst_rot_matrix(mesh_chi)*inst_rot_matrix(-mesh_theta)
-    *mueller_multiple_layer(mesh_nu, n_s, n_f, d, eps_1, eps_2)
-    *inst_rot_matrix(-mesh_theta)*inst_rot_matrix(mesh_psi))
+    mpol = np.zeros(mesh_chi.shape+(4,4), dtype=complex)
+    mpol[:,:,:,:,:,:] = jones_to_mueller(np.array([[eta, 0], [0, delta]]))
+    chi_theta_rot = np.matmul(inst_rot_matrix(mesh_chi), inst_rot_matrix(-mesh_theta))
+
+    theta_psi_rot = np.matmul(inst_rot_matrix(-mesh_theta), inst_rot_matrix(mesh_psi))
+    
+    return np.matmul(mpol, np.matmul( np.matmul(chi_theta_rot, mueller_multiple_layer(mesh_nu, n_s, n_f, d)), theta_psi_rot) )
 
 #Input parameters
 
@@ -102,30 +106,31 @@ n_f =3.04 #From 1006.3874
 d = 3.05e-3
 
 nu = np.arange(0, 3e11, 5e9)
-psi = np.arange(0, 2*np.pi, np.pi/10)
-chi = np.pi/6
-theta = np.arange(0, np.pi, np.pi/10)
-#total_intru = instrument_total_matrix(nu, n_s, n_f, d, eps_1, eps_2, 0.7, 0.3, chi, psi, psi)
+psi = np.pi/3
+chi = np.pi/3
+theta = np.pi/3
+total_intru = instrument_total_matrix(nu, n_s, n_f, d, 1.0, 0.0, chi, psi, psi)
+print total_intru[0,0,0,0,:,:]
 #print total_intru.shape
 mueller_response = mueller_single_plate(nu, n_s, n_f, d)
 mueller_multiple = mueller_multiple_layer(nu, n_s, n_f, d)
-#print mueller_multiple.shape
+
 fig, ax = plt.subplots(2, 2, sharey='col', sharex='row')
 
 ax[0,0].plot(nu/1e9, mueller_response[0,:], 'r--')
-ax[0,0].plot(nu/1e9, mueller_multiple[0,0,:], 'b')
+ax[0,0].plot(nu/1e9, mueller_multiple[:,0,0], 'b.')
 ax[0,0].set(xlabel="Frequency [GHz]", title='T')
 
 ax[0,1].plot(nu/1e9, mueller_response[1,:], 'r--')
-ax[0,1].plot(nu/1e9, mueller_multiple[1,0,:], 'b')
+ax[0,1].plot(nu/1e9, mueller_multiple[:,1,0], 'b.')
 ax[0,1].set(xlabel="Frequency [GHz]", title=r'$\rho$')
 
 ax[1,0].plot(nu/1e9, mueller_response[2,:], 'r--')
-ax[1,0].plot(nu/1e9, mueller_multiple[2,2,:], 'b')
+ax[1,0].plot(nu/1e9, mueller_multiple[:,2,2], 'b.')
 ax[1,0].set(xlabel="Frequency [GHz]", title='c')
 
 ax[1,1].plot(nu/1e9, mueller_response[3,:], 'r--')
-ax[1,1].plot(nu/1e9, mueller_multiple[3,2,:], 'b')
+ax[1,1].plot(nu/1e9, mueller_multiple[:,3,2], 'b.')
 ax[1,1].set(xlabel="Frequency [GHz]", title='s')
 
 
