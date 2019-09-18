@@ -33,6 +33,18 @@ def mueller_single_plate(nu, n_s, n_f, d):#DONT USE as model for eps!=0
 
     return mueller_mat
 
+def mueller_ideal(nu, n_s, n_f, d):#DONT USE as model for eps!=0
+
+    phase = phi(nu, n_s,n_f,d)
+
+    mueller_mat = np.zeros(nu.shape+(4,4))
+    mueller_mat[:,:,:,:,0,0] = 1 #00 and 11 elements
+    mueller_mat[:,:,:,:,1,1] = 1
+    mueller_mat[:,:,:,:,2,2] = -1 #22 and 33 elements
+    mueller_mat[:,:,:,:,3,3] = -1
+    return mueller_mat
+
+
 def mueller_multiple_layer(nu, n_s, n_f, d):# Equation 9
 
     a, b, eps_1, eps_2 = properties(nu)
@@ -96,8 +108,7 @@ def instrument_total_matrix(nu, n_s, n_f, d, eta, delta, chi, theta, psi):
     chi_theta_rot = np.matmul(inst_rot_matrix(mesh_chi), inst_rot_matrix(-mesh_theta))
 
     theta_psi_rot = np.matmul(inst_rot_matrix(-mesh_theta), inst_rot_matrix(mesh_psi))
-    
-    return np.matmul(mpol, np.matmul( np.matmul(chi_theta_rot, mueller_multiple_layer(mesh_nu, n_s, n_f, d)), theta_psi_rot) )
+    return np.matmul(mpol, np.matmul( np.matmul(chi_theta_rot, mueller_ideal(mesh_nu, n_s, n_f, d)), theta_psi_rot) )
 
 #Input parameters
 
@@ -107,9 +118,9 @@ d = 3.05e-3
 
 nu = np.arange(0, 3e11, 5e9)
 psi = np.pi/3
-chi = np.pi/3
+chi = 0
 theta = np.pi/3
-total_intru = instrument_total_matrix(nu, n_s, n_f, d, 1.0, 0.0, chi, psi, psi)
+total_intru = instrument_total_matrix(nu, n_s, n_f, d, 1, 0, chi, psi, psi)
 print total_intru[0,0,0,0,:,:]
 #print total_intru.shape
 mueller_response = mueller_single_plate(nu, n_s, n_f, d)
