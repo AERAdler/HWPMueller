@@ -6,12 +6,15 @@ import matplotlib.pyplot as plt
 Celerity = 3e8 #Speed of light in medium
 
 
-sapphire_transmission = np.loadtxt('dummy_sapphire.txt')
+sapphire_properties = np.loadtxt('dummy_sapphire.txt', dtype=complex)
 
-def transmission(nu):
+def properties(nu):
 
-    return [ np.interp(nu, sapphire_transmission[:,0], sapphire_transmission[:,1]), 
-    np.interp(nu, sapphire_transmission[:,0], sapphire_transmission[:,2]) ]
+    return [ np.interp(nu, np.real(sapphire_properties[:,0]), np.real(sapphire_properties[:,1])), 
+    np.interp(nu, np.real(sapphire_properties[:,0]), np.real(sapphire_properties[:,2])), 
+    np.interp(nu, np.real(sapphire_properties[:,0]), sapphire_properties[:,3]),
+    np.interp(nu, np.real(sapphire_properties[:,0]), sapphire_properties[:,4]),
+     ]
 
 def phi(nu, n_s, n_f, d):
 
@@ -19,7 +22,7 @@ def phi(nu, n_s, n_f, d):
 
 def mueller_single_plate(nu, n_s, n_f, d):#DONT USE as model for eps!=0
 
-    a, b = transmission(nu)
+    a, b, eps_1, eps_2 = properties(nu)
     phase = phi(nu, n_s,n_f,d)
 
     mueller_mat = np.zeros((4,nu.size))
@@ -30,9 +33,9 @@ def mueller_single_plate(nu, n_s, n_f, d):#DONT USE as model for eps!=0
 
     return mueller_mat
 
-def mueller_multiple_layer(nu, n_s, n_f, d, eps_1, eps_2):# Equation 9
+def mueller_multiple_layer(nu, n_s, n_f, d):# Equation 9
 
-    a, b = transmission(nu)
+    a, b, eps_1, eps_2 = properties(nu)
     phase = phi(nu, n_s,n_f,d)
 
 
@@ -93,33 +96,36 @@ def instrument_total_matrix(nu, n_s, n_f, d, eps_1, eps_2, eta, delta, chi, thet
     *inst_rot_matrix(-mesh_theta)*inst_rot_matrix(mesh_psi))
 
 #Input parameters
-eps_1 = 0+0j
-eps_2 = 0+0j
 
 n_s = 3.36 #From 1006.3874
 n_f =3.04 #From 1006.3874
 d = 3.05e-3
 
-nu = np.arange(0, 3e11, 1e10)
+nu = np.arange(0, 3e11, 5e9)
 psi = np.arange(0, 2*np.pi, np.pi/10)
 chi = np.pi/6
 theta = np.arange(0, np.pi, np.pi/10)
-total_intru = instrument_total_matrix(nu, n_s, n_f, d, eps_1, eps_2, 0.7, 0.3, chi, psi, psi)
+#total_intru = instrument_total_matrix(nu, n_s, n_f, d, eps_1, eps_2, 0.7, 0.3, chi, psi, psi)
 #print total_intru.shape
 mueller_response = mueller_single_plate(nu, n_s, n_f, d)
-mueller_multiple = mueller_multiple_layer(nu, n_s, n_f, d, eps_1, eps_2)
+mueller_multiple = mueller_multiple_layer(nu, n_s, n_f, d)
 #print mueller_multiple.shape
 fig, ax = plt.subplots(2, 2, sharey='col', sharex='row')
-ax[0,0].plot(nu/1e9, mueller_response[0,:]-mueller_multiple[0,0,:], 'r--')
+
+ax[0,0].plot(nu/1e9, mueller_response[0,:], 'r--')
+ax[0,0].plot(nu/1e9, mueller_multiple[0,0,:], 'b')
 ax[0,0].set(xlabel="Frequency [GHz]", title='T')
 
-ax[0,1].plot(nu/1e9, mueller_response[1,:]-mueller_multiple[1,0,:], 'r--')
+ax[0,1].plot(nu/1e9, mueller_response[1,:], 'r--')
+ax[0,1].plot(nu/1e9, mueller_multiple[1,0,:], 'b')
 ax[0,1].set(xlabel="Frequency [GHz]", title=r'$\rho$')
 
-ax[1,0].plot(nu/1e9, mueller_response[2,:]-mueller_multiple[2,2,:], 'r--')
+ax[1,0].plot(nu/1e9, mueller_response[2,:], 'r--')
+ax[1,0].plot(nu/1e9, mueller_multiple[2,2,:], 'b')
 ax[1,0].set(xlabel="Frequency [GHz]", title='c')
 
-ax[1,1].plot(nu/1e9, mueller_response[3,:]-mueller_multiple[3,2,:], 'r--')
+ax[1,1].plot(nu/1e9, mueller_response[3,:], 'r--')
+ax[1,1].plot(nu/1e9, mueller_multiple[3,2,:], 'b')
 ax[1,1].set(xlabel="Frequency [GHz]", title='s')
 
 
