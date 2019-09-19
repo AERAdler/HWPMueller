@@ -106,9 +106,9 @@ n_f =3.04 #From 1006.3874
 d = 3.05e-3
 
 nu = np.arange(0, 3e11, 5e9)
-psi = np.pi/3
-chi = np.pi/3
-theta = np.pi/3
+psi = np.arange(0,2*np.pi, np.pi/20) 
+chi = 0
+theta = np.arange(0, np.pi, np.pi/50)
 total_intru = instrument_total_matrix(nu, n_s, n_f, d, 1.0, 0.0, chi, psi, psi)
 print total_intru[0,0,0,0,:,:]
 #print total_intru.shape
