@@ -106,11 +106,11 @@ n_f =3.04 #From 1006.3874
 d = 3.05e-3
 
 nu = np.arange(0, 3e11, 5e9)
-psi = np.arange(0,2*np.pi, np.pi/20) 
+psi = 0
 chi = 0
 theta = np.arange(0, np.pi, np.pi/50)
-total_intru = instrument_total_matrix(nu, n_s, n_f, d, 1.0, 0.0, chi, psi, psi)
-print total_intru[0,0,0,0,:,:]
+total_intru = instrument_total_matrix(nu, n_s, n_f, d, 1.0, 0.0, chi, theta, psi)
+print total_intru.shape
 #print total_intru.shape
 mueller_response = mueller_single_plate(nu, n_s, n_f, d)
 mueller_multiple = mueller_multiple_layer(nu, n_s, n_f, d)
@@ -133,6 +133,10 @@ ax[1,1].plot(nu/1e9, mueller_response[3,:], 'r--')
 ax[1,1].plot(nu/1e9, mueller_multiple[:,3,2], 'b.')
 ax[1,1].set(xlabel="Frequency [GHz]", title='s')
 
-
 plt.subplots_adjust(left=0.1, bottom=0.08, right=0.9, top=0.92, wspace=0.2, hspace=0.35)
+
+figrot = plt.figure(2)
+
+plt.plot(theta, total_intru[:,0,0,nu.size/2,0,1], 'r')
+plt.plot(theta, total_intru[:,0,0,nu.size/2,0,2], 'g')
 plt.show()
