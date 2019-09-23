@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+from mpl_toolkits.mplot3d import Axes3D
 Celerity = 3e8 #Speed of light in medium
 
 
@@ -86,7 +86,7 @@ def jones_to_mueller(J):# Equation 3
             mueller[i,j] = 0.5*np.trace(np.matmul(np.matmul(pauli[i], J),np.matmul(pauli[j], np.conjugate(np.transpose(J)))) )
     return mueller
 
-def inst_rot_matrix(psi):#Tinbergen, Astronoimical Polarimetry
+def rot_matrix(psi):#Tinbergen, Astronoimical Polarimetry
     a = np.ones(psi.shape)
     b = np.zeros(psi.shape)
     c = np.cos(2*psi)
@@ -103,10 +103,8 @@ def instrument_total_matrix(nu, n_s, n_f, d, eta, delta, chi, theta, psi):
     #This might cause memory size issues ? 
 
     mpol = jones_to_mueller(np.array([[eta, 0], [0, delta]]))
-    chi_theta_rot = np.matmul(inst_rot_matrix(mesh_chi), inst_rot_matrix(-mesh_theta))
-    print inst_rot_matrix(mesh_psi)[25,0,0,0,:,:]
-    theta_psi_rot = np.matmul(inst_rot_matrix(-mesh_theta), inst_rot_matrix(mesh_psi))
-    return np.matmul(mpol, np.matmul( np.matmul(chi_theta_rot, mueller_ideal(mesh_nu, n_s, n_f, d)), theta_psi_rot) )
+
+    return mpol@rot_matrix(mesh_chi)@rot_matrix(-mesh_theta)@mueller_ideal(mesh_nu, n_s, n_f, d)@rot_matrix(mesh_theta)@rot_matrix(mesh_psi)
 
 #Input parameters
 
@@ -115,13 +113,14 @@ n_f =3.04 #From 1006.3874
 d = 3.05e-3
 
 nu = np.arange(0, 3e11, 5e9)
-psi = np.array(np.pi/3)
+psi = np.arange(0,8*np.pi, np.pi/25)
 chi = np.array([0])
 theta = np.arange(0, np.pi, np.pi/50)
-total_intru = instrument_total_matrix(nu, n_s, n_f, d, 0.7, 0.2, chi, theta, psi)
-#print total_intru.shape
+total_instru = instrument_total_matrix(nu, n_s, n_f, d, 1, 0, chi, theta, psi)
+print(total_instru.shape)
 mueller_response = mueller_single_plate(nu, n_s, n_f, d)
 mueller_multiple = mueller_multiple_layer(nu, n_s, n_f, d)
+mesh_theta, mesh_psi = np.meshgrid(theta,psi)
 
 # fig, ax = plt.subplots(2, 2, sharey='col', sharex='row')
 
@@ -145,7 +144,10 @@ mueller_multiple = mueller_multiple_layer(nu, n_s, n_f, d)
 # plt.subplots_adjust(left=0.1, bottom=0.08, right=0.9, top=0.92, wspace=0.2, hspace=0.35)
 
 plt.figure(1)
-plt.plot(theta/np.pi, np.real(total_intru[:,0,0,0,1,0]))
-plt.xlabel(r"$\theta$")
-plt.ylabel(r"$M_{IQ}$")
+
+plt.imshow(np.real(total_instru[:,0,:,0,0,1]))
+plt.xlabel(theta)
+plt.ylabel(psi)
+#plt.xlabel(r"$\theta$")
+#plt.ylabel(r"$M_{IQ}$")
 plt.show()
