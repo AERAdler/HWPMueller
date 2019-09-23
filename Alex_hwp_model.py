@@ -1,6 +1,6 @@
 import numpy as np
 
-def calculate_hwp_mueller_matrix_alex(use_preset_thickness_and_index='150GHz', cooled=True, n_s=False,n_f=False, n_ar=False,n_gap=False, d_hwp=False,d_ar_near=False,d_ar_far=False, d_gap_near=False, d_gap_far=False, freq=np.linspace(135,165,31)):
+def hwp_mueller_matrix(use_preset_thickness_and_index='150GHz', cooled=True, n_s=False,n_f=False, n_ar=False,n_gap=False, d_hwp=False,d_ar_near=False,d_ar_far=False, d_gap_near=False, d_gap_far=False, freq=np.linspace(135,165,31)):
     # SAB
     #
     # I've been reading "Microwave Engineering" by Pozar to sort of get my bearings for KIDs stuff
@@ -122,4 +122,17 @@ def calculate_hwp_mueller_matrix_alex(use_preset_thickness_and_index='150GHz', c
 
     return T, rho, c, s, R, tau, h, q
 
+#### call
+f = np.arange(0, 1000, 1)
+
+table = np.zeros((f.size,5))
+table[:,0] = f*1e9
+T, rho, c, s, R, tau, h, q = hwp_mueller_matrix(use_preset_thickness_and_index='150GHz', cooled=True, 
+    n_s=False,n_f=False, n_ar=False,n_gap=False,
+    d_hwp=False,d_ar_near=False,d_ar_far=False, d_gap_near=False, d_gap_far=False, freq=f)
+
+table[:,1] = np.sqrt(T+rho)
+table[:,2] = np.sqrt(T-rho)
+
+np.savetxt("dummy_sapphire.txt", table)
 
