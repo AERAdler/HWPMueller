@@ -93,7 +93,7 @@ def rot_matrix(psi):#Tinbergen, Astronoimical Polarimetry
     d = np.sin(2*psi)
     return np.moveaxis(np.array([[a,b,b,b],[b,c,d,b],[b,-d,c,b],[b,b,b,a]]), (0,1), (-2,-1))
 
-def instrument_total_matrix(nu, n_s, n_f, d, eta, delta, chi, theta, psi):
+def instrument_total_matrix_ideal_hwp(nu, n_s, n_f, d, eta, delta, chi, theta, psi):
     #nu is the frequency of the light
     #n_s, n_f, and d are the properties of the hwp
     #eta and delta are the two Jones parameters for the detector
@@ -116,8 +116,8 @@ nu = np.arange(0, 3e11, 5e9)
 psi = np.arange(0,8*np.pi, np.pi/25)
 chi = np.array([0])
 theta = np.arange(0, np.pi, np.pi/50)
-total_instru = instrument_total_matrix(nu, n_s, n_f, d, 1, 0, chi, theta, psi)
-print(total_instru.shape)
+total_instru_ideal = instrument_total_matrix_ideal_hwp(nu, n_s, n_f, d, 1, 0, chi, theta, psi)
+
 mueller_response = mueller_single_plate(nu, n_s, n_f, d)
 mueller_multiple = mueller_multiple_layer(nu, n_s, n_f, d)
 mesh_theta, mesh_psi = np.meshgrid(theta,psi)
