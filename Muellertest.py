@@ -33,6 +33,19 @@ def mueller_single_plate(nu, n_s, n_f, d):#DONT USE as model for eps!=0
 
     return mueller_mat
 
+def mueller_no_eps(nu,n_s,n_f,d):
+    a, b, eps_1, eps_2 = properties(nu)
+    T = .5*(a**2+b**2)
+    rho = .5*(a**2-b**2)
+    c = a*b*np.cos(phi(nu,n_s,n_f,d))
+    s = a*b*np.sin(phi(nu,n_s,n_f,d))
+    phase = phi(nu, n_s,n_f,d)
+    mueller_mat = np.zeros(nu.shape+(4,4))
+    mueller_mat = np.array([[T, rho, 0,0],[rho, T, 0, 0],[0,0, c, -s],[0,0,s,c]])
+    mueller_mat = np.moveaxis(mueller_mat, (0,1), (-2,-1))#To make compliant with matmul later
+    return mueller_mat
+
+
 def mueller_ideal(nu, n_s, n_f, d):#DONT USE as model for eps!=0
 
     mueller_mat = np.zeros(nu.shape+(4,4))
@@ -106,50 +119,62 @@ def instrument_total_matrix_ideal_hwp(nu, n_s, n_f, d, eta, delta, chi, theta, p
 
     return mpol@rot_matrix(mesh_chi)@rot_matrix(-mesh_theta)@mueller_ideal(mesh_nu, n_s, n_f, d)@rot_matrix(mesh_theta)@rot_matrix(mesh_psi)
 
+def instrument_total_matrix_non_ideal_hwp(nu, n_s, n_f, d, eta, delta, chi, theta, psi):
+    mesh_chi, mesh_theta, mesh_psi, mesh_nu = np.meshgrid(chi, theta, psi, nu)#4D arrays of all possible positions and frequencies
+    #This might cause memory size issues ? 
+
+    mpol = jones_to_mueller(np.array([[eta, 0], [0, delta]]))
+    print("mpol computed")
+    return mpol@rot_matrix(mesh_chi)@rot_matrix(-mesh_theta)@mueller_no_eps(mesh_nu, n_s, n_f, d)@rot_matrix(mesh_theta)@rot_matrix(mesh_psi)
+#issue
+
 #Input parameters
 
 n_s = 3.36 #From 1006.3874
 n_f =3.04 #From 1006.3874
 d = 3.05e-3
 
-nu = np.arange(0, 3e11, 5e9)
+nu = np.arange(0, 3e11, 1e9)
 
-psi = np.arange(0,8*np.pi, np.pi/25)
+psi = np.arange(0,2*np.pi, np.pi/20)
 chi = np.array([0])
-theta = np.arange(0, np.pi, np.pi/50)
-total_instru_ideal = instrument_total_matrix_ideal_hwp(nu, n_s, n_f, d, 1, 0, chi, theta, psi)
-total_intru = instrument_total_matrix(nu, n_s, n_f, d, 1.0, 0.0, chi, theta, psi)
+theta = np.arange(0, 2*np.pi, np.pi/20)
+#total_instru_ideal = instrument_total_matrix_ideal_hwp(nu, n_s, n_f, d, 1.0, 0, chi, theta, psi)
 
-mueller_response = mueller_single_plate(nu, n_s, n_f, d)
+#total_instru = instrument_total_matrix_non_ideal_hwp(nu, n_s, n_f, d, 1.0, 0.0, chi, theta, psi)
+
 mueller_multiple = mueller_multiple_layer(nu, n_s, n_f, d)
-mesh_theta, mesh_psi = np.meshgrid(theta,psi)
-
-# fig, ax = plt.subplots(2, 2, sharey='col', sharex='row')
-
-# ax[0,0].plot(nu/1e9, mueller_response[0,:], 'r--')
-# ax[0,0].plot(nu/1e9, mueller_multiple[:,0,0], 'b.')
-# ax[0,0].set(xlabel="Frequency [GHz]", title='T')
-
-# ax[0,1].plot(nu/1e9, mueller_response[1,:], 'r--')
-# ax[0,1].plot(nu/1e9, mueller_multiple[:,1,0], 'b.')
-# ax[0,1].set(xlabel="Frequency [GHz]", title=r'$\rho$')
-
-# ax[1,0].plot(nu/1e9, mueller_response[2,:], 'r--')
-# ax[1,0].plot(nu/1e9, mueller_multiple[:,2,2], 'b.')
-# ax[1,0].set(xlabel="Frequency [GHz]", title='c')
-
-# ax[1,1].plot(nu/1e9, mueller_response[3,:], 'r--')
-# ax[1,1].plot(nu/1e9, mueller_multiple[:,3,2], 'b.')
-# ax[1,1].set(xlabel="Frequency [GHz]", title='s')
 
 
-# plt.subplots_adjust(left=0.1, bottom=0.08, right=0.9, top=0.92, wspace=0.2, hspace=0.35)
 
-plt.figure(1)
 
-plt.imshow(np.real(total_instru[:,0,:,0,0,1]))
-plt.xlabel(theta)
-plt.ylabel(psi)
+fig, ax = plt.subplots(2, 2, sharey='col', sharex='row')
+#ax[0,0].plot(nu/1e9, mueller_response[0,:], 'r.-')
+ax[0,0].plot(nu/1e9, mueller_multiple[:,0,0], 'b-')
+ax[0,0].set(xlabel="Frequency [GHz]", title='T')
+ax[0,0].ylim = (-1,1)
+
+#ax[0,1].plot(nu/1e9, mueller_response[1,:], 'r.-')
+ax[0,1].plot(nu/1e9, mueller_multiple[:,1,0], 'b-')
+ax[0,1].set(xlabel="Frequency [GHz]", title=r'$\rho$')
+ax[0,1].ylim = (-1,1)
+
+#ax[1,0].plot(nu/1e9, mueller_response[2,:], 'r.-')
+ax[1,0].plot(nu/1e9, mueller_multiple[:,2,2], 'b-')
+ax[1,0].set(xlabel="Frequency [GHz]", title='c')
+ax[1,0].ylim = (-1,1)
+
+#ax[1,1].plot(nu/1e9, mueller_response[3,:], 'r.-')
+ax[1,1].plot(nu/1e9, mueller_multiple[:,3,2], 'b-')
+ax[1,1].set(xlabel="Frequency [GHz]", title='s')
+ax[1,1].ylim = (-1,1)
+
+#plt.figure(2)
+#plt.imshow(np.real(total_instru_ideal[:,0,:,0,0,1]))
+#plt.figure(3)
+#plt.imshow(np.real(total_instru[:,0,:,0,0,1]))
+#plt.xlabel(theta)
+#plt.ylabel(psi)
 #plt.xlabel(r"$\theta$")
 #plt.ylabel(r"$M_{IQ}$")
 
