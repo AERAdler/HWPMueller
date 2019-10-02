@@ -120,7 +120,7 @@ def hwp_mueller_matrix(use_preset_thickness_and_index='150GHz', cooled=True, n_s
     h = 0.5*np.trace( np.real(sigma3@J_ref@sigma3@np.conj(np.transpose(J_ref, (0,2,1))) ), axis1=1, axis2=2 )
     q = 0.5*np.trace( np.real(sigma4@J_ref@sigma3@np.conj(np.transpose(J_ref, (0,2,1))) ), axis1=1, axis2=2 )
 
-    return T, rho, c, s, R, tau, h, q
+    return nu, T, rho, c, s, R, tau, h, q
 
 #### call
 f = np.arange(0, 1000, 1)
